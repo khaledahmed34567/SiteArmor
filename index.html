@@ -1,156 +1,131 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiteArmor — Security Scanner &amp; Load Tester</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SiteArmor</title>
+<link rel="stylesheet" href="style.css" />
 </head>
-<body dir="ltr" data-lang="en">
+<body dir="rtl" data-lang="ar">
 
-  <!-- ===================== HEADER ===================== -->
-  <header class="site-header">
-    <div class="header-inner">
+  <header class="topbar">
+    <div class="topbar-inner">
       <div class="brand">
-        <img src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="SiteArmor logo" class="brand-logo" onerror="this.style.display='none'">
+        <img class="brand-logo" src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="SiteArmor" onerror="this.style.display='none'" />
         <span class="brand-name">SiteArmor</span>
       </div>
-      <button id="langToggle" class="lang-toggle" type="button" aria-label="Toggle language">
-        <span class="lang-pill" id="langPill"></span>
-        <span class="lang-option" data-lang="en">EN</span>
-        <span class="lang-option" data-lang="ar">AR</span>
-      </button>
+      <button id="langToggle" class="lang-toggle" type="button">EN</button>
     </div>
   </header>
 
-  <!-- ===================== MAIN ===================== -->
-  <main class="app-main">
+  <main class="page">
 
-    <div class="hero">
-      <h1 data-i18n="heroTitle">Harden and stress-test your site</h1>
-      <p class="thin-font" data-i18n="heroSubtitle">Two lightweight tools. One clean report.</p>
+    <section class="hero">
+      <h1 data-i18n="hero_title">درع موقعك يبدأ من هنا</h1>
+      <p class="hero-sub" data-i18n="hero_sub">افحص رؤوس الحماية الحقيقية لموقعك، وقِس أداءه بأمان — بعد إثبات ملكيتك للنطاق.</p>
+    </section>
+
+    <div class="segmented" role="tablist">
+      <button class="segment active" data-tab="scanner" role="tab" aria-selected="true" data-i18n="tab_scanner">فاحص رؤوس الحماية</button>
+      <button class="segment" data-tab="loadtest" role="tab" aria-selected="false" data-i18n="tab_loadtest">اختبار الأداء</button>
     </div>
 
-    <!-- Segmented control -->
-    <div class="segmented-control" role="tablist">
-      <button class="segment active" data-tool="scanner" role="tab" aria-selected="true" data-i18n="tabScanner">Security Scanner</button>
-      <button class="segment" data-tool="loadtest" role="tab" aria-selected="false" data-i18n="tabLoadTest">Load Tester</button>
-      <span class="segment-thumb"></span>
-    </div>
-
-    <!-- ============ TOOL A: SECURITY SCANNER ============ -->
-    <section id="scannerPanel" class="tool-panel active">
+    <!-- TOOL A: Scanner -->
+    <section id="panel-scanner" class="panel active">
       <div class="card">
-        <h2 data-i18n="scannerTitle">Security Headers Scanner</h2>
-        <p class="subtitle" data-i18n="scannerSubtitle">Check which security headers your site is sending.</p>
-
+        <label class="field-label" data-i18n="url_label">رابط الموقع</label>
         <div class="input-row">
-          <input type="text" id="scannerUrl" class="text-input" data-i18n-placeholder="urlPlaceholder" placeholder="https://example.com" autocomplete="off">
-          <button id="scanBtn" class="btn btn-primary" type="button" data-i18n="scanBtn">Scan</button>
+          <input id="scanUrl" type="text" placeholder="https://example.com" data-i18n-placeholder="url_placeholder" />
+          <button id="scanBtn" class="btn btn-primary" data-i18n="scan_btn">فحص</button>
         </div>
-        <p id="scannerError" class="error-text hidden" data-i18n="urlError">Please enter a valid URL.</p>
+        <p id="scanError" class="error-text hidden"></p>
+      </div>
 
-        <div id="scannerLoading" class="loading-block hidden">
-          <div class="spinner"></div>
-          <span data-i18n="scanningText">Scanning headers…</span>
-        </div>
-
-        <div id="scannerResults" class="results-block hidden">
-          <div class="grade-row">
-            <div id="gradeBadge" class="grade-badge">A</div>
-            <div class="grade-info">
-              <div class="scanned-domain" id="scannedDomain">example.com</div>
-              <div class="scanned-time thin-font" id="scanTimestamp">—</div>
-            </div>
-          </div>
-
-          <ul id="headersList" class="headers-list"></ul>
-
-          <div class="actions-row">
-            <button id="printBtnScanner" class="btn btn-secondary" type="button" data-i18n="printReport">Print Report</button>
+      <div id="scanResult" class="card result-card hidden">
+        <div class="grade-row">
+          <div id="gradeBadge" class="grade-badge">A</div>
+          <div class="grade-meta">
+            <div id="scanDomain" class="scan-domain">example.com</div>
+            <div id="scanNote" class="note" data-i18n="scan_generated">تقرير حقيقي بناءً على استجابة الخادم الفعلية</div>
           </div>
         </div>
+        <div id="headersList" class="headers-list"></div>
+        <button id="printScanBtn" class="btn btn-ghost print-btn" data-i18n="print_btn">طباعة التقرير</button>
       </div>
     </section>
 
-    <!-- ============ TOOL B: LOAD TESTER ============ -->
-    <section id="loadtestPanel" class="tool-panel">
+    <!-- TOOL B: Load Tester -->
+    <section id="panel-loadtest" class="panel">
+
       <div class="card">
-        <h2 data-i18n="loadtestTitle">Load Tester</h2>
-        <p class="subtitle" data-i18n="loadtestSubtitle">Simulate concurrent traffic against your site.</p>
+        <p class="explain" data-i18n="verify_explain">
+          لحماية المواقع من إساءة الاستخدام، لازم تثبت إنك مالك النطاق قبل تشغيل أي اختبار حقيقي.
+        </p>
 
+        <label class="field-label" data-i18n="domain_label">النطاق</label>
         <div class="input-row">
-          <input type="text" id="loadtestUrl" class="text-input" data-i18n-placeholder="urlPlaceholder" placeholder="https://example.com" autocomplete="off">
-        </div>
-        <p id="loadtestError" class="error-text hidden" data-i18n="urlError">Please enter a valid URL.</p>
-
-        <div class="slider-block">
-          <div class="slider-label-row">
-            <span data-i18n="usersLabel">Concurrent Virtual Users</span>
-            <span id="usersValue" class="users-value">100</span>
-          </div>
-          <input type="range" id="usersSlider" min="10" max="1000" step="10" value="100" class="slider">
-          <div class="slider-scale">
-            <span>10</span>
-            <span>1000</span>
-          </div>
+          <input id="verifyDomain" type="text" placeholder="example.com" data-i18n-placeholder="domain_placeholder" />
+          <button id="genTokenBtn" class="btn btn-secondary" data-i18n="gen_token_btn">إنشاء رمز التحقق</button>
         </div>
 
-        <button id="startTestBtn" class="btn btn-primary btn-full" type="button" data-i18n="startTestBtn">Start Test</button>
+        <div id="tokenBox" class="token-box hidden">
+          <p class="note" data-i18n="verify_step1">١. أنشئ ملفًا في نطاقك على المسار التالي بالضبط:</p>
+          <code id="verifyPath" class="code-line">/.well-known/sitearmor-verify.txt</code>
+          <p class="note" data-i18n="verify_step2">٢. ضع بداخله هذا الرمز فقط، بدون أي مسافات إضافية:</p>
+          <code id="tokenValue" class="code-line token-value"></code>
+          <button id="verifyBtn" class="btn btn-primary" data-i18n="verify_btn">تحقق من الملكية</button>
+          <p id="verifyStatus" class="verify-status"></p>
+        </div>
+      </div>
 
-        <div id="loadtestProgress" class="progress-block hidden">
-          <div class="progress-track">
-            <div id="progressFill" class="progress-fill"></div>
-          </div>
-          <span id="progressLabel" class="thin-font">0%</span>
+      <div id="loadtestCard" class="card disabled-card">
+        <div class="lock-overlay" id="lockOverlay">
+          <span data-i18n="locked_note">إثبات ملكية النطاق مطلوب لتفعيل الاختبار</span>
         </div>
 
-        <div id="loadtestResults" class="results-block hidden">
+        <label class="field-label" data-i18n="target_label">رابط الاختبار</label>
+        <input id="loadUrl" type="text" placeholder="https://example.com" data-i18n-placeholder="url_placeholder" disabled />
+
+        <label class="field-label slider-label">
+          <span data-i18n="requests_label">عدد طلبات الاختبار</span>
+          <span id="requestsValue" class="slider-value">10</span>
+        </label>
+        <input id="requestsSlider" type="range" min="5" max="30" value="10" disabled />
+        <p class="note small" data-i18n="requests_cap_note">الحد الأقصى 30 طلبًا — أداة قياس أداء آمنة، وليست أداة ضغط أو هجوم.</p>
+
+        <button id="startTestBtn" class="btn btn-primary" data-i18n="start_test_btn" disabled>بدء الاختبار</button>
+
+        <div id="testProgress" class="progress-wrap hidden">
+          <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+        </div>
+
+        <div id="loadResult" class="result-card hidden">
           <div class="stats-grid">
-            <div class="stat-card">
-              <span class="stat-label" data-i18n="responseTimeLabel">Response Time</span>
-              <span class="stat-value" id="statResponseTime">—</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label" data-i18n="successRateLabel">Success Rate</span>
-              <span class="stat-value" id="statSuccessRate">—</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label" data-i18n="serverStatusLabel">Server Status</span>
-              <span class="stat-value" id="statServerStatus">—</span>
-            </div>
+            <div class="stat"><div id="statAvg" class="stat-value">—</div><div class="stat-label" data-i18n="stat_avg">متوسط زمن الاستجابة</div></div>
+            <div class="stat"><div id="statSuccess" class="stat-value">—</div><div class="stat-label" data-i18n="stat_success">نسبة النجاح</div></div>
+            <div class="stat"><div id="statStatus" class="stat-value">—</div><div class="stat-label" data-i18n="stat_status">حالة الخادم</div></div>
           </div>
-          <div class="scanned-time thin-font" id="loadtestTimestamp">—</div>
-
-          <div class="actions-row">
-            <button id="printBtnLoadtest" class="btn btn-secondary" type="button" data-i18n="printReport">Print Report</button>
-          </div>
+          <button id="printLoadBtn" class="btn btn-ghost print-btn" data-i18n="print_btn">طباعة التقرير</button>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- ===================== FOOTER ===================== -->
+  <!-- Print-only report -->
+  <div id="printArea" class="print-area">
+    <img class="print-logo" src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="SiteArmor" />
+    <h2 id="printTitle"></h2>
+    <div id="printBody"></div>
+    <div id="printTimestamp" class="print-timestamp"></div>
+  </div>
+
   <footer class="site-footer">
-    <a class="footer-credit" href="https://www.linkedin.com/in/khaled-ahmed-241002386?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noopener noreferrer">
-      <span data-i18n="footerBy">By Khaled Ahmed</span>
-      <img src="https://i.ibb.co/3sX8M2m/kVR73Fxh.png" alt="Khaled Ahmed" class="footer-logo" onerror="this.style.display='none'">
+    <a class="footer-credit" href="https://www.linkedin.com/in/khaled-ahmed-241002386?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noopener">
+      <img src="https://i.ibb.co/3sX8M2m/kVR73Fxh.png" alt="" class="footer-logo" onerror="this.style.display='none'" />
+      <span data-i18n="footer_credit">بواسطة خالد أحمد</span>
     </a>
   </footer>
-
-  <!-- ===================== PRINT-ONLY REPORT ===================== -->
-  <div id="printArea" class="print-area">
-    <div class="print-header">
-      <img src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="SiteArmor logo" class="print-logo" onerror="this.style.display='none'">
-      <h1 id="printTitle">SiteArmor Report</h1>
-    </div>
-    <div class="print-meta thin-font">
-      <span id="printDomain"></span>
-      <span id="printTimestamp"></span>
-    </div>
-    <div id="printBody"></div>
-  </div>
 
   <script src="script.js"></script>
 </body>
