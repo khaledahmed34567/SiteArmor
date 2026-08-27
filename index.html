@@ -1,132 +1,1044 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SiteArmor</title>
-<link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#ffffff"/>
+<title>CyberIntel — لوحة الاستخبارات السيبرانية</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+@font-face{font-family:'KhaledHead';src:url('https://files.catbox.moe/ftr9rp.otf') format('opentype')}
+@font-face{font-family:'KhaledBody';src:url('https://files.catbox.moe/jernkn.otf') format('opentype')}
+@font-face{font-family:'KhaledThin';src:url('https://files.catbox.moe/gsv6s7.otf') format('opentype')}
+:root{
+  --white:#fff;--bg:#f5f5f7;--card:#fff;--text:#1d1d1f;--text2:#6e6e73;--text3:#aeaeb2;
+  --blue:#007aff;--blue-bg:rgba(0,122,255,.08);
+  --green:#34c759;--green-bg:rgba(52,199,89,.1);
+  --red:#ff3b30;--red-bg:rgba(255,59,48,.1);
+  --orange:#ff9500;--orange-bg:rgba(255,149,0,.1);
+  --purple:#af52de;
+  --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
+  --shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);
+  --shadow2:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  --radius:16px;--radius2:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'KhaledBody',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'KhaledHead',system-ui,sans-serif}
+p,span,a,li,input,button,select,textarea{font-family:'KhaledBody',system-ui,sans-serif}
+
+/* ══ AUTH OVERLAY ══════════════════════════════════════════════ */
+#auth-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(245,245,247,.97);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+}
+.auth-box{
+  background:var(--white);border-radius:22px;
+  border:1px solid var(--border);box-shadow:var(--shadow2);
+  padding:2.5rem 2rem;width:100%;max-width:400px;
+}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:1.75rem}
+.auth-logo img{height:32px;object-fit:contain}
+.auth-logo-title{font-family:'KhaledHead',sans-serif;font-size:20px;font-weight:800;color:var(--text)}
+.auth-tabs{display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:1.75rem;border:1px solid var(--border)}
+.auth-tab{flex:1;font-family:'KhaledBody',sans-serif;font-size:14px;font-weight:600;padding:8px;border-radius:9px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;text-align:center}
+.auth-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:600;color:var(--text2)}
+.form-input{padding:11px 14px 11px 40px;border-radius:var(--radius2);border:1px solid var(--border2);background:var(--bg);font-family:'KhaledBody',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;width:100%}
+.form-input:focus{border-color:var(--blue);background:var(--white)}
+.form-input::placeholder{color:var(--text3)}
+.input-wrap{position:relative}
+.input-icon{position:absolute;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;align-items:center}
+[dir="rtl"] .input-icon{right:12px}
+[dir="ltr"] .input-icon{left:12px}
+[dir="rtl"] .form-input{padding:11px 40px 11px 14px}
+[dir="ltr"] .form-input{padding:11px 14px 11px 40px}
+.btn-auth{width:100%;padding:12px;border-radius:var(--radius2);border:none;background:var(--text);color:#fff;font-family:'KhaledBody',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-auth:hover{background:#333;transform:translateY(-1px)}
+.btn-auth:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-err{background:var(--red-bg);border:1px solid rgba(255,59,48,.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);display:none}
+.auth-err.show{display:block}
+.auth-ok{background:var(--green-bg);border:1px solid rgba(52,199,89,.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);display:none}
+.auth-ok.show{display:block}
+.divider-row{display:flex;align-items:center;gap:10px;margin:4px 0}
+.divider-row span{font-size:12px;color:var(--text3);white-space:nowrap}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.btn-google{width:100%;padding:11px;border-radius:var(--radius2);border:1px solid var(--border2);background:var(--white);color:var(--text);font-family:'KhaledBody',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:var(--shadow)}
+.btn-google:hover{box-shadow:var(--shadow2);border-color:#4285f4;transform:translateY(-1px)}
+.btn-google:disabled{opacity:.5;cursor:not-allowed;transform:none}
+#g_id_onload{display:none}
+
+/* ══ NAV ═══════════════════════════════════════════════════════ */
+nav{background:rgba(255,255,255,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between}
+.nav-left{display:flex;align-items:center;gap:12px}
+.nav-logo img{height:30px;object-fit:contain;display:block}
+.nav-title{font-family:'KhaledHead',sans-serif;font-size:17px;font-weight:700;color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.lang-toggle{display:flex;background:var(--bg);border-radius:20px;padding:3px;border:1px solid var(--border2)}
+.lang-btn{font-family:'KhaledBody',sans-serif;font-size:12px;font-weight:600;padding:4px 13px;border-radius:16px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s}
+.lang-btn.active{background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.print-btn{font-family:'KhaledBody',sans-serif;font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--white);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);transition:all .2s}
+.print-btn:hover{box-shadow:var(--shadow2)}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border2);border-radius:20px;padding:4px 12px 4px 4px;cursor:pointer;transition:all .2s}
+.user-pill:hover{border-color:var(--blue)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout-btn{font-family:'KhaledBody',sans-serif;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .2s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ══ HERO ══════════════════════════════════════════════════════ */
+.hero{text-align:center;padding:2.5rem 1.5rem 1.5rem;max-width:680px;margin:0 auto}
+.hero-eyebrow{font-family:'KhaledThin',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--blue);margin-bottom:.75rem}
+.hero h1{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:800;line-height:1.1;margin-bottom:.6rem;color:var(--text)}
+.hero p{font-size:15px;color:var(--text2);line-height:1.7;max-width:480px;margin:0 auto}
+
+/* ══ TABS ══════════════════════════════════════════════════════ */
+.tabs-wrap{display:flex;justify-content:center;padding:0 1rem;margin-bottom:1.25rem;overflow-x:auto}
+.tabs{display:inline-flex;background:var(--white);border-radius:12px;padding:4px;border:1px solid var(--border);box-shadow:var(--shadow);white-space:nowrap}
+.tab{font-family:'KhaledBody',sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border-radius:9px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.tab.active{background:var(--text);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+
+/* ══ CONTAINER ═════════════════════════════════════════════════ */
+.container{max-width:860px;margin:0 auto;padding:0 1.25rem 4rem}
+.tool-panel{display:none}.tool-panel.active{display:block}
+
+/* ══ CARD ══════════════════════════════════════════════════════ */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:1.4rem;margin-bottom:1rem}
+.card-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+
+/* ══ INPUTS ════════════════════════════════════════════════════ */
+.input-row{display:flex;gap:10px;flex-wrap:wrap}
+.url-input{flex:1;min-width:0;padding:11px 15px;border-radius:var(--radius2);border:1px solid var(--border2);background:var(--bg);font-family:'KhaledBody',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
+.url-input:focus{border-color:var(--blue);background:var(--white)}
+.url-input::placeholder{color:var(--text3)}
+
+/* ══ BUTTONS ═══════════════════════════════════════════════════ */
+.btn{font-family:'KhaledBody',sans-serif;font-size:14px;font-weight:700;padding:11px 22px;border-radius:var(--radius2);border:none;cursor:pointer;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--text);color:#fff}.btn-primary:hover{background:#333;transform:translateY(-1px)}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#0066dd;transform:translateY(-1px)}
+.btn-primary:disabled,.btn-blue:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ══ RESULT BOX ════════════════════════════════════════════════ */
+.result-box{display:none}.result-box.show{display:block}
+
+/* ══ GRADE ═════════════════════════════════════════════════════ */
+.grade-row{display:flex;align-items:center;gap:1.25rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.grade-circle{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'KhaledHead',sans-serif;font-size:2.4rem;font-weight:900;flex-shrink:0}
+.grade-A{background:var(--green-bg);color:var(--green)}.grade-B{background:var(--blue-bg);color:var(--blue)}
+.grade-C{background:var(--orange-bg);color:var(--orange)}.grade-D{background:rgba(175,82,222,.1);color:var(--purple)}
+.grade-F{background:var(--red-bg);color:var(--red)}
+.grade-info h3{font-size:17px;font-weight:800;margin-bottom:3px}
+.grade-info p{font-size:13px;color:var(--text2);line-height:1.6}
+.headers-list{display:flex;flex-direction:column;gap:7px}
+.header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;gap:10px}
+.header-present{background:var(--green-bg)}.header-missing{background:var(--red-bg)}
+.header-name{font-size:13px;font-weight:700;color:var(--text)}
+.header-desc{font-size:11px;color:var(--text2);margin-top:2px}
+.header-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.badge-present{background:var(--green);color:#fff}.badge-missing{background:var(--red);color:#fff}
+
+/* ══ PROGRESS ══════════════════════════════════════════════════ */
+.prog-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.prog-label span{font-size:13px;color:var(--text2)}.prog-label strong{font-size:13px;font-weight:700;color:var(--text)}
+.prog-track{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:12px;border:1px solid var(--border)}
+.prog-fill{height:100%;border-radius:4px;background:var(--blue);transition:width .6s ease}
+
+/* ══ STATS ═════════════════════════════════════════════════════ */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1rem}
+@media(max-width:540px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--bg);border-radius:var(--radius2);padding:.9rem;text-align:center;border:1px solid var(--border)}
+.stat-val{font-family:'KhaledHead',sans-serif;font-size:1.5rem;font-weight:900;color:var(--text)}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:3px;font-family:'KhaledThin',sans-serif}
+.stat-ok .stat-val{color:var(--green)}.stat-warn .stat-val{color:var(--orange)}.stat-bad .stat-val{color:var(--red)}
+
+/* ══ INTEL ═════════════════════════════════════════════════════ */
+.intel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+@media(max-width:500px){.intel-grid{grid-template-columns:1fr}}
+.intel-card{background:var(--bg);border-radius:var(--radius2);padding:.9rem;border:1px solid var(--border)}
+.intel-key{font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'KhaledThin',sans-serif;text-transform:uppercase;letter-spacing:1px}
+.intel-val{font-size:14px;font-weight:700;color:var(--text)}
+
+/* ══ FEED ══════════════════════════════════════════════════════ */
+.feed-item{display:flex;gap:11px;padding:11px;border-radius:10px;border:1px solid var(--border);margin-bottom:7px;background:var(--card);transition:box-shadow .2s}
+.feed-item:hover{box-shadow:var(--shadow)}
+.feed-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-red{background:var(--red)}.dot-orange{background:var(--orange)}.dot-blue{background:var(--blue)}.dot-green{background:var(--green)}
+.feed-body{flex:1}.feed-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.feed-meta{font-size:11px;color:var(--text3);font-family:'KhaledThin',sans-serif}
+.feed-badge{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700;margin-top:5px;display:inline-block}
+.fb-critical{background:var(--red-bg);color:var(--red)}.fb-high{background:var(--orange-bg);color:var(--orange)}
+.fb-medium{background:var(--blue-bg);color:var(--blue)}.fb-low{background:var(--green-bg);color:var(--green)}
+
+/* ══ VT ════════════════════════════════════════════════════════ */
+.vt-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.vt-row:last-child{border:none}.vt-engine{font-size:13px;color:var(--text)}
+.vt-clean{font-size:12px;font-weight:700;color:var(--green)}.vt-malicious{font-size:12px;font-weight:700;color:var(--red)}.vt-suspicious{font-size:12px;font-weight:700;color:var(--orange)}
+
+/* ══ MISC ══════════════════════════════════════════════════════ */
+.scanning{display:flex;align-items:center;gap:10px;padding:1rem;color:var(--text2);font-size:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:17px;height:17px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.timestamp{font-family:'KhaledThin',sans-serif;font-size:11px;color:var(--text3);margin-top:.5rem}
+.error-box{background:var(--red-bg);border:1px solid rgba(255,59,48,.2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--red);margin-top:.5rem}
+.real-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--green-bg);color:var(--green);border:1px solid rgba(52,199,89,.25)}
+
+/* ══ FOOTER ════════════════════════════════════════════════════ */
+footer{border-top:1px solid var(--border);padding:1.25rem;display:flex;align-items:center;justify-content:center;background:var(--white)}
+.footer-link{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text2);font-size:13px;transition:color .2s}
+.footer-link:hover{color:var(--text)}
+.footer-link img{height:28px;object-fit:contain;border-radius:50%}
+
+/* ══ RESPONSIVE ════════════════════════════════════════════════ */
+@media(max-width:580px){
+  .input-row{flex-direction:column}.btn{width:100%;justify-content:center}
+  nav{padding:0 1rem}.hero{padding:1.75rem 1rem 1.25rem}
+  .tab{padding:7px 10px;font-size:12px}
+  .auth-box{padding:2rem 1.25rem}
+}
+
+/* ══ PRINT ═════════════════════════════════════════════════════ */
+@media print{
+  #auth-overlay,nav,.tabs-wrap,.hero,.input-row,.btn,.lang-toggle,.print-btn,.user-pill,.logout-btn{display:none!important}
+  body{background:#fff}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+  .tool-panel{display:none!important}.tool-panel.active{display:block!important}
+  .print-header{display:flex!important;align-items:center;gap:16px;margin-bottom:1.5rem;padding:1rem 1.5rem;border-bottom:2px solid #1d1d1f}
+  footer{border-top:1px solid #eee}
+}
+.print-header{display:none}
+</style>
 </head>
-<body dir="rtl" data-lang="ar">
+<body>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <img class="brand-logo" src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="SiteArmor" onerror="this.style.display='none'" />
-        <span class="brand-name">SiteArmor</span>
-      </div>
-      <button id="langToggle" class="lang-toggle" type="button">EN</button>
-    </div>
-  </header>
-
-  <main class="page">
-
-    <section class="hero">
-      <h1 data-i18n="hero_title">درع موقعك يبدأ من هنا</h1>
-      <p class="hero-sub" data-i18n="hero_sub">افحص رؤوس الحماية الحقيقية لموقعك، وقِس أداءه بأمان — بعد إثبات ملكيتك للنطاق.</p>
-    </section>
-
-    <div class="segmented" role="tablist">
-      <button class="segment active" data-tab="scanner" role="tab" aria-selected="true" data-i18n="tab_scanner">فاحص رؤوس الحماية</button>
-      <button class="segment" data-tab="loadtest" role="tab" aria-selected="false" data-i18n="tab_loadtest">اختبار الأداء</button>
+<!-- ════ AUTH OVERLAY ════════════════════════════════════════════ -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <img src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="CyberIntel" onerror="this.style.display='none'"/>
+      <span class="auth-logo-title">CyberIntel</span>
     </div>
 
-    <!-- TOOL A: Scanner -->
-    <section id="panel-scanner" class="panel active">
-      <div class="card">
-        <label class="field-label" data-i18n="url_label">رابط الموقع</label>
-        <div class="input-row">
-          <input id="scanUrl" type="text" placeholder="https://example.com" data-i18n-placeholder="url_placeholder" />
-          <button id="scanBtn" class="btn btn-primary" data-i18n="scan_btn">فحص</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="atab-login" onclick="switchAuthTab('login')" data-i="login_tab">تسجيل الدخول</button>
+      <button class="auth-tab" id="atab-register" onclick="switchAuthTab('register')" data-i="register_tab">إنشاء حساب</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login" class="auth-form">
+      <div class="form-group">
+        <label class="form-label" data-i="email_label">البريد الإلكتروني</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </span>
+          <input class="form-input" id="login-email" type="email" data-ph="email_ph" placeholder="example@email.com" autocomplete="email"/>
         </div>
-        <p id="scanError" class="error-text hidden"></p>
       </div>
+      <div class="form-group">
+        <label class="form-label" data-i="pass_label">كلمة المرور</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="form-input" id="login-pass" type="password" data-ph="pass_ph" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+      </div>
+      <div class="auth-err" id="login-err"></div>
+      <button class="btn-google" onclick="triggerGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-i="google_btn">الدخول بـ Google</span>
+      </button>
+      <div class="divider-row"><div class="divider-line"></div><span data-i="or_divider">أو بالبريد الإلكتروني</span><div class="divider-line"></div></div>
+      <button class="btn-auth" id="login-btn" onclick="doLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        <span data-i="login_btn">دخول</span>
+      </button>
+    </div>
 
-      <div id="scanResult" class="card result-card hidden">
+    <!-- REGISTER FORM -->
+    <div id="form-register" class="auth-form" style="display:none">
+      <div class="form-group">
+        <label class="form-label" data-i="username_label">اسم المستخدم</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+          </span>
+          <input class="form-input" id="reg-username" type="text" data-ph="username_ph" placeholder="username" autocomplete="username"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i="email_label">البريد الإلكتروني</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </span>
+          <input class="form-input" id="reg-email" type="email" data-ph="email_ph" placeholder="example@email.com" autocomplete="email"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i="pass_label">كلمة المرور</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="form-input" id="reg-pass" type="password" data-ph="pass_ph" placeholder="••••••••" autocomplete="new-password"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i="confirm_label">تأكيد كلمة المرور</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="m9 16 2 2 4-4"/></svg>
+          </span>
+          <input class="form-input" id="reg-confirm" type="password" data-ph="confirm_ph" placeholder="••••••••" autocomplete="new-password"/>
+        </div>
+      </div>
+      <div class="auth-err" id="reg-err"></div>
+      <div class="auth-ok" id="reg-ok"></div>
+      <button class="btn-google" onclick="triggerGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-i="google_btn">التسجيل بـ Google</span>
+      </button>
+      <div class="divider-row"><div class="divider-line"></div><span data-i="or_divider">أو بالبريد الإلكتروني</span><div class="divider-line"></div></div>
+      <button class="btn-auth" id="reg-btn" onclick="doRegister()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        <span data-i="register_btn">إنشاء حساب</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden GSI div -->
+<div id="g_id_onload"
+  data-client_id="355037443320-g3s1413hs3krs1gpj4r1b9ifnigendqr.apps.googleusercontent.com"
+  data-callback="handleGoogleCredential"
+  data-auto_prompt="false">
+</div>
+
+<!-- ════ NAV ══════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo"><img src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="CyberIntel" onerror="this.style.display='none'"/></div>
+    <span class="nav-title" data-i="nav_title">CyberIntel</span>
+  </div>
+  <div class="nav-right">
+    <button class="print-btn" onclick="doPrint()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span data-i="print_btn">طباعة التقرير</span>
+    </button>
+    <div class="user-pill" id="user-pill">
+      <div class="user-avatar" id="user-avatar">X</div>
+      <span class="user-name" id="user-name-nav">—</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()" data-i="logout_btn">خروج</button>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-ar" onclick="setLang('ar')">ع</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<!-- PRINT HEADER -->
+<div class="print-header" id="print-header">
+  <img src="https://i.ibb.co/1q2wGZB/22mcKYG.png" style="height:44px;object-fit:contain" onerror="this.style.display='none'"/>
+  <div><h2 style="font-size:18px" id="print-title">CyberIntel</h2><p class="timestamp" id="print-ts"></p></div>
+</div>
+
+<!-- ════ HERO ══════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-eyebrow" data-i="hero_eyebrow">منصة الاستخبارات السيبرانية</div>
+  <h1 data-i="hero_title">لوحة الاستخبارات السيبرانية</h1>
+  <p data-i="hero_sub">بيانات حقيقية — Shodan API و VirusTotal API وفحص رؤوس أمنية فعلية</p>
+</div>
+
+<!-- ════ TABS ══════════════════════════════════════════════════════ -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab active" id="tab-headers" onclick="switchTab('headers',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span data-i="tab_headers">الرؤوس الأمنية</span>
+    </button>
+    <button class="tab" id="tab-shodan" onclick="switchTab('shodan',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+      <span data-i="tab_shodan">Shodan</span>
+    </button>
+    <button class="tab" id="tab-vt" onclick="switchTab('vt',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+      <span data-i="tab_vt">VirusTotal</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════ CONTAINER ═════════════════════════════════════════════════ -->
+<div class="container">
+
+  <!-- PANEL: HEADERS -->
+  <div class="tool-panel active" id="panel-headers">
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span data-i="headers_title">فحص الرؤوس الأمنية</span>
+        <span class="real-badge">REAL</span>
+      </div>
+      <div class="input-row">
+        <input class="url-input" id="headers-url" type="url" placeholder="https://example.com" data-ph="headers_ph"/>
+        <button class="btn btn-primary" id="headers-btn" onclick="scanHeaders()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span data-i="scan_btn">فحص الآن</span>
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:8px" data-i="headers_note">يجلب الرؤوس الأمنية الفعلية من الموقع</p>
+    </div>
+    <div class="result-box" id="headers-result">
+      <div class="card">
         <div class="grade-row">
-          <div id="gradeBadge" class="grade-badge">A</div>
-          <div class="grade-meta">
-            <div id="scanDomain" class="scan-domain">example.com</div>
-            <div id="scanNote" class="note" data-i18n="scan_generated">تقرير حقيقي بناءً على استجابة الخادم الفعلية</div>
+          <div class="grade-circle grade-A" id="grade-circle">A</div>
+          <div class="grade-info">
+            <h3 id="grade-label">—</h3>
+            <p id="grade-desc">—</p>
+            <p class="timestamp" id="headers-ts"></p>
           </div>
         </div>
-        <div id="headersList" class="headers-list"></div>
-        <button id="printScanBtn" class="btn btn-ghost print-btn" data-i18n="print_btn">طباعة التقرير</button>
+        <div class="headers-list" id="headers-list"></div>
       </div>
-    </section>
-
-    <!-- TOOL B: Load Tester -->
-    <section id="panel-loadtest" class="panel">
-
-      <div class="card">
-        <p class="explain" data-i18n="verify_explain">
-          لحماية المواقع من إساءة الاستخدام، لازم تثبت إنك مالك النطاق قبل تشغيل أي اختبار حقيقي.
-        </p>
-
-        <label class="field-label" data-i18n="domain_label">النطاق</label>
-        <div class="input-row">
-          <input id="verifyDomain" type="text" placeholder="example.com" data-i18n-placeholder="domain_placeholder" />
-          <button id="genTokenBtn" class="btn btn-secondary" data-i18n="gen_token_btn">إنشاء رمز التحقق</button>
-        </div>
-
-        <div id="tokenBox" class="token-box hidden">
-          <p class="note" data-i18n="verify_step1">١. أنشئ ملفًا في نطاقك على المسار التالي بالضبط:</p>
-          <code id="verifyPath" class="code-line">/.well-known/sitearmor-verify.txt</code>
-          <p class="note" data-i18n="verify_step2">٢. ضع بداخله هذا الرمز فقط، بدون أي مسافات إضافية:</p>
-          <code id="tokenValue" class="code-line token-value"></code>
-          <button id="verifyBtn" class="btn btn-primary" data-i18n="verify_btn">تحقق من الملكية</button>
-          <p id="verifyStatus" class="verify-status"></p>
-        </div>
-      </div>
-
-      <div id="loadtestCard" class="card disabled-card">
-        <div class="lock-overlay" id="lockOverlay">
-          <span data-i18n="locked_note">إثبات ملكية النطاق مطلوب لتفعيل الاختبار</span>
-        </div>
-
-        <label class="field-label" data-i18n="target_label">رابط الاختبار</label>
-        <input id="loadUrl" type="text" placeholder="https://example.com" data-i18n-placeholder="url_placeholder" disabled />
-
-        <label class="field-label slider-label">
-          <span data-i18n="requests_label">عدد طلبات الاختبار</span>
-          <span id="requestsValue" class="slider-value">10</span>
-        </label>
-        <input id="requestsSlider" type="range" min="5" max="30" value="10" disabled />
-        <p class="note small" data-i18n="requests_cap_note">الحد الأقصى 30 طلبًا — أداة قياس أداء آمنة، وليست أداة ضغط أو هجوم.</p>
-
-        <button id="startTestBtn" class="btn btn-primary" data-i18n="start_test_btn" disabled>بدء الاختبار</button>
-
-        <div id="testProgress" class="progress-wrap hidden">
-          <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-        </div>
-
-        <div id="loadResult" class="result-card hidden">
-          <div class="stats-grid">
-            <div class="stat"><div id="statAvg" class="stat-value">—</div><div class="stat-label" data-i18n="stat_avg">متوسط زمن الاستجابة</div></div>
-            <div class="stat"><div id="statSuccess" class="stat-value">—</div><div class="stat-label" data-i18n="stat_success">نسبة النجاح</div></div>
-            <div class="stat"><div id="statStatus" class="stat-value">—</div><div class="stat-label" data-i18n="stat_status">حالة الخادم</div></div>
-          </div>
-          <button id="printLoadBtn" class="btn btn-ghost print-btn" data-i18n="print_btn">طباعة التقرير</button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Print-only report -->
-  <div id="printArea" class="print-area">
-    <img class="print-logo" src="https://i.ibb.co/1q2wGZB/22mcKYG.png" alt="SiteArmor" />
-    <h2 id="printTitle"></h2>
-    <div id="printBody"></div>
-    <div id="printTimestamp" class="print-timestamp"></div>
+    </div>
   </div>
 
-  <footer class="site-footer">
-    <a class="footer-credit" href="https://www.linkedin.com/in/khaled-ahmed-241002386?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noopener">
-      <img src="https://i.ibb.co/3sX8M2m/kVR73Fxh.png" alt="" class="footer-logo" onerror="this.style.display='none'" />
-      <span data-i18n="footer_credit">بواسطة خالد أحمد</span>
-    </a>
-  </footer>
+  <!-- PANEL: SHODAN -->
+  <div class="tool-panel" id="panel-shodan">
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <span data-i="shodan_title">Shodan Intelligence</span>
+        <span class="real-badge">REAL API</span>
+      </div>
+      <div class="input-row">
+        <input class="url-input" id="shodan-url" type="text" placeholder="8.8.8.8" data-ph="shodan_ph"/>
+        <button class="btn btn-primary" id="shodan-btn" onclick="runShodan()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span data-i="shodan_btn">تحليل الهدف</span>
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:8px" data-i="shodan_note">أدخل IP فقط</p>
+    </div>
+    <div class="result-box" id="shodan-result">
+      <div class="card">
+        <div class="card-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="shodan-host-lbl">نتائج الفحص</span>
+        </div>
+        <div class="intel-grid" id="shodan-grid"></div>
+        <div style="margin-top:1.1rem">
+          <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            <span data-i="open_ports">المنافذ المفتوحة</span>
+          </div>
+          <div id="shodan-ports" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+        </div>
+        <div id="shodan-banners-wrap" style="margin-top:1.1rem;display:none">
+          <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span data-i="banners">معلومات الخدمات</span>
+          </div>
+          <div id="shodan-banners"></div>
+        </div>
+        <div style="margin-top:1.1rem">
+          <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span data-i="vulns">الثغرات المعروفة</span>
+          </div>
+          <div id="shodan-vulns"></div>
+        </div>
+        <p class="timestamp" id="shodan-ts"></p>
+      </div>
+    </div>
+  </div>
 
-  <script src="script.js"></script>
+  <!-- PANEL: VIRUSTOTAL -->
+  <div class="tool-panel" id="panel-vt">
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+        <span data-i="vt_title">VirusTotal Scanner</span>
+        <span class="real-badge">REAL API</span>
+      </div>
+      <div class="input-row">
+        <input class="url-input" id="vt-url" type="text" placeholder="https://example.com" data-ph="vt_ph"/>
+        <button class="btn btn-primary" id="vt-btn" onclick="runVT()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span data-i="vt_btn">فحص شامل</span>
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:8px" data-i="vt_note">URL, IP, Domain, MD5/SHA256</p>
+    </div>
+    <div class="result-box" id="vt-result">
+      <div class="card">
+        <div id="vt-summary"></div>
+        <div id="vt-engines" style="margin-top:1rem"></div>
+        <p class="timestamp" id="vt-ts"></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+        <span data-i="feed_title">تغذية التهديدات الحية</span>
+      </div>
+      <div id="threat-feed"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════ FOOTER ════════════════════════════════════════════════════ -->
+<footer>
+  <a class="footer-link" href="https://www.linkedin.com/in/khaled-ahmed-241002386?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noopener">
+    <img src="https://i.ibb.co/3sX8M2m/kVR73Fxh.png" alt="Khaled Ahmed" onerror="this.style.display='none'"/>
+    <span data-i="footer_by">بواسطة خالد أحمد</span>
+  </a>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════════════════ */
+const SHODAN_KEY  = 'QXON7Ow1thIpIP8xkPGtWZ1p9WbcH3mu';
+const VT_KEY      = '07c85253fa816fb703838e22ba88bee0039750c15d210554bf52eb7274f37b39';
+const CORS_PROXY  = 'https://corsproxy.io/?';
+const GOOGLE_CLIENT_ID = '355037443320-g3s1413hs3krs1gpj4r1b9ifnigendqr.apps.googleusercontent.com';
+const SHEETSON_KEY= 'HlUZiTjLO1sp-Ou0JbsluuQNAWUoMP2XOYcVw5n6OxoroGNPfVpIDZq3fF0';
+const SHEET_ID    = '1pRytmd5umMr3r1YkZQ0pq13_VA1LO7B6nuEjQ5e0dJE';
+const SHEET_NAME  = 'users';
+const SHEETSON_BASE = `https://api.sheetson.com/v2/sheets/${SHEET_NAME}`;
+
+/* ══════════════════════════════════════════════════════════════════
+   i18n
+══════════════════════════════════════════════════════════════════ */
+const D = {
+  ar:{
+    nav_title:'CyberIntel', print_btn:'طباعة التقرير', logout_btn:'خروج',
+    hero_eyebrow:'منصة الاستخبارات السيبرانية',
+    hero_title:'لوحة الاستخبارات السيبرانية',
+    hero_sub:'بيانات حقيقية — Shodan API و VirusTotal API وفحص رؤوس أمنية فعلية',
+    tab_headers:'الرؤوس الأمنية', tab_shodan:'Shodan', tab_vt:'VirusTotal',
+    headers_title:'فحص الرؤوس الأمنية', headers_ph:'https://example.com',
+    headers_note:'يجلب الرؤوس الأمنية الفعلية من الموقع',
+    scan_btn:'فحص الآن',
+    shodan_title:'Shodan Intelligence', shodan_ph:'8.8.8.8',
+    shodan_note:'أدخل IP فقط', shodan_btn:'تحليل الهدف',
+    open_ports:'المنافذ المفتوحة', banners:'معلومات الخدمات', vulns:'الثغرات المعروفة',
+    vt_title:'VirusTotal Scanner', vt_ph:'https://example.com أو IP أو MD5',
+    vt_note:'URL, IP, Domain, MD5/SHA256', vt_btn:'فحص شامل',
+    feed_title:'تغذية التهديدات الحية', footer_by:'بواسطة خالد أحمد',
+    login_tab:'تسجيل الدخول', register_tab:'إنشاء حساب',
+    google_btn:'الدخول بـ Google', or_divider:'أو بالبريد الإلكتروني',
+    email_label:'البريد الإلكتروني', email_ph:'example@email.com',
+    pass_label:'كلمة المرور', pass_ph:'••••••••',
+    confirm_label:'تأكيد كلمة المرور', confirm_ph:'••••••••',
+    username_label:'اسم المستخدم', username_ph:'username',
+    login_btn:'دخول', register_btn:'إنشاء حساب',
+    scanning:'جارٍ الفحص...', present:'موجود', missing:'غائب',
+    country:'الدولة', org:'المنظمة', asn:'رقم ASN', isp:'مزود الإنترنت',
+    hostnames:'أسماء المضيف', last_update:'آخر تحديث', ports:'المنافذ',
+    malicious:'خطير', suspicious:'مشبوه', clean:'نظيف',
+    ts_prefix:'فُحص في: ', print_report:'تقرير CyberIntel',
+    no_vulns:'لا ثغرات معروفة', api_err:'خطأ في الاتصال',
+    no_engines:'لا توجد نتائج',
+    err_fields:'يرجى ملء جميع الحقول',
+    err_pass_match:'كلمات المرور غير متطابقة',
+    err_pass_len:'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+    err_user_exists:'هذا البريد الإلكتروني مسجل مسبقاً',
+    err_invalid:'البريد أو كلمة المرور غير صحيحة',
+    ok_register:'تم إنشاء الحساب بنجاح! يمكنك الدخول الآن.',
+    grade_labels:{A:'ممتاز — أمان عالٍ',B:'جيد — يحتاج تحسينات',C:'متوسط — مخاطر محتملة',D:'ضعيف — إصلاحات عاجلة',F:'حرج — وضع خطير'},
+    grade_descs:{A:'الموقع يطبق أفضل ممارسات الأمان.',B:'معظم الرؤوس موجودة مع ثغرات بسيطة.',C:'نصف الرؤوس الأمنية غائبة.',D:'غياب كبير للحماية الأمنية.',F:'الموقع مكشوف للهجمات.'},
+  },
+  en:{
+    nav_title:'CyberIntel', print_btn:'Print Report', logout_btn:'Logout',
+    hero_eyebrow:'CYBER INTELLIGENCE PLATFORM',
+    hero_title:'Cyber Intelligence Dashboard',
+    hero_sub:'Real data — Shodan API & VirusTotal API & live security headers scan',
+    tab_headers:'Security Headers', tab_shodan:'Shodan', tab_vt:'VirusTotal',
+    headers_title:'Security Headers Scanner', headers_ph:'https://example.com',
+    headers_note:'Fetches real security headers from the site',
+    scan_btn:'Scan Now',
+    shodan_title:'Shodan Intelligence', shodan_ph:'8.8.8.8',
+    shodan_note:'Enter IP only', shodan_btn:'Analyze Target',
+    open_ports:'Open Ports', banners:'Service Banners', vulns:'Known Vulnerabilities',
+    vt_title:'VirusTotal Scanner', vt_ph:'https://example.com or IP or MD5',
+    vt_note:'URL, IP, Domain, MD5/SHA256', vt_btn:'Full Scan',
+    feed_title:'Live Threat Feed', footer_by:'By Khaled Ahmed',
+    login_tab:'Sign In', register_tab:'Create Account',
+    google_btn:'Sign in with Google', or_divider:'or with email',
+    email_label:'Email Address', email_ph:'example@email.com',
+    pass_label:'Password', pass_ph:'••••••••',
+    confirm_label:'Confirm Password', confirm_ph:'••••••••',
+    username_label:'Username', username_ph:'username',
+    login_btn:'Sign In', register_btn:'Create Account',
+    scanning:'Scanning...', present:'Present', missing:'Missing',
+    country:'Country', org:'Organization', asn:'ASN', isp:'ISP',
+    hostnames:'Hostnames', last_update:'Last Updated', ports:'Ports',
+    malicious:'Malicious', suspicious:'Suspicious', clean:'Clean',
+    ts_prefix:'Scanned at: ', print_report:'CyberIntel Report',
+    no_vulns:'No known vulnerabilities', api_err:'API connection error',
+    no_engines:'No engine results',
+    err_fields:'Please fill all fields',
+    err_pass_match:'Passwords do not match',
+    err_pass_len:'Password must be at least 6 characters',
+    err_user_exists:'This email is already registered',
+    err_invalid:'Invalid email or password',
+    ok_register:'Account created! You can sign in now.',
+    grade_labels:{A:'Excellent — High Security',B:'Good — Minor Improvements',C:'Average — Potential Risks',D:'Poor — Urgent Fixes',F:'Critical — Severe Risk'},
+    grade_descs:{A:'Site implements security best practices.',B:'Most headers present with minor gaps.',C:'Half of security headers missing.',D:'Major absence of security protection.',F:'Site fully exposed to attacks.'},
+  }
+};
+let lang='ar';
+const t=k=>D[lang][k]||k;
+const tf=(k,s)=>(D[lang][k]||{})[s]||s;
+
+function setLang(l){
+  lang=l;
+  document.documentElement.lang=l;
+  document.documentElement.dir=l==='ar'?'rtl':'ltr';
+  document.getElementById('btn-ar').classList.toggle('active',l==='ar');
+  document.getElementById('btn-en').classList.toggle('active',l==='en');
+  document.querySelectorAll('[data-i]').forEach(el=>el.textContent=t(el.dataset.i));
+  document.querySelectorAll('[data-ph]').forEach(el=>el.placeholder=t(el.dataset.ph));
+  renderFeed();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   AUTH — SHEETSON
+══════════════════════════════════════════════════════════════════ */
+function hashPass(str){
+  // Simple hash — for real security use bcrypt on a backend
+  let h=0;
+  for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}
+  return Math.abs(h).toString(16);
+}
+
+function sheetHeaders(){
+  return {'Authorization':`Bearer ${SHEETSON_KEY}`,'X-Spreadsheet-Id':SHEET_ID,'Content-Type':'application/json'};
+}
+
+async function sheetGetAll(){
+  const r=await fetch(`${SHEETSON_BASE}?limit=500`,{headers:sheetHeaders()});
+  if(!r.ok)throw new Error('Sheetson error '+r.status);
+  const j=await r.json();
+  return j.results||[];
+}
+
+async function sheetCreate(row){
+  const r=await fetch(SHEETSON_BASE,{method:'POST',headers:sheetHeaders(),body:JSON.stringify(row)});
+  if(!r.ok)throw new Error('Sheetson write error '+r.status);
+  return r.json();
+}
+
+function switchAuthTab(tab){
+  document.getElementById('form-login').style.display=tab==='login'?'flex':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'flex':'none';
+  document.getElementById('atab-login').classList.toggle('active',tab==='login');
+  document.getElementById('atab-register').classList.toggle('active',tab==='register');
+  document.getElementById('login-err').classList.remove('show');
+  document.getElementById('reg-err').classList.remove('show');
+  document.getElementById('reg-ok').classList.remove('show');
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  errEl.classList.remove('show');
+  if(!email||!pass){errEl.textContent=t('err_fields');errEl.classList.add('show');return}
+  btn.disabled=true;
+  try{
+    const rows=await sheetGetAll();
+    const hashed=hashPass(pass);
+    const user=rows.find(r=>r.email===email&&r.password===hashed);
+    if(!user){errEl.textContent=t('err_invalid');errEl.classList.add('show');btn.disabled=false;return}
+    sessionStorage.setItem('ci_user',JSON.stringify({username:user.username,email:user.email}));
+    enterApp(user.username);
+  }catch(e){
+    errEl.textContent=t('api_err')+': '+e.message;errEl.classList.add('show');
+  }
+  btn.disabled=false;
+}
+
+async function doRegister(){
+  const username=document.getElementById('reg-username').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const confirm=document.getElementById('reg-confirm').value;
+  const errEl=document.getElementById('reg-err');
+  const okEl=document.getElementById('reg-ok');
+  const btn=document.getElementById('reg-btn');
+  errEl.classList.remove('show');okEl.classList.remove('show');
+  if(!username||!email||!pass||!confirm){errEl.textContent=t('err_fields');errEl.classList.add('show');return}
+  if(pass!==confirm){errEl.textContent=t('err_pass_match');errEl.classList.add('show');return}
+  if(pass.length<6){errEl.textContent=t('err_pass_len');errEl.classList.add('show');return}
+  btn.disabled=true;
+  try{
+    const rows=await sheetGetAll();
+    if(rows.find(r=>r.email===email)){errEl.textContent=t('err_user_exists');errEl.classList.add('show');btn.disabled=false;return}
+    await sheetCreate({username,email,password:hashPass(pass),created:new Date().toISOString()});
+    okEl.textContent=t('ok_register');okEl.classList.add('show');
+    setTimeout(()=>switchAuthTab('login'),2000);
+  }catch(e){
+    errEl.textContent=t('api_err')+': '+e.message;errEl.classList.add('show');
+  }
+  btn.disabled=false;
+}
+
+function enterApp(username,avatarUrl){
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('user-name-nav').textContent=username;
+  const av=document.getElementById('user-avatar');
+  if(avatarUrl){
+    av.innerHTML=`<img src="${avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" referrerpolicy="no-referrer"/>`;
+  }else{
+    av.textContent=username[0].toUpperCase();
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('ci_user');
+  document.getElementById('auth-overlay').style.display='flex';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+  switchAuthTab('login');
+}
+
+// Check session on load
+const _sess=sessionStorage.getItem('ci_user');
+if(_sess){try{const u=JSON.parse(_sess);enterApp(u.username,u.avatar||null)}catch(e){}}
+
+/* ══ Allow Enter key in auth forms ══ */
+['login-email','login-pass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()}));
+['reg-username','reg-email','reg-pass','reg-confirm'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doRegister()}));
+
+/* ══════════════════════════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════════════════════════ */
+function switchTab(id,btn){
+  document.querySelectorAll('.tool-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='vt')renderFeed();
+}
+
+/* ══ UTILS ══════════════════════════════════════════════════════ */
+function nowStr(){return new Date().toLocaleString(lang==='ar'?'ar-EG':'en-GB',{dateStyle:'long',timeStyle:'medium'})}
+function setTs(id){const el=document.getElementById(id);if(el)el.textContent=t('ts_prefix')+nowStr()}
+function showScanning(id){document.getElementById(id).innerHTML=`<div class="scanning"><div class="spinner"></div><span>${t('scanning')}</span></div>`}
+function showError(id,msg){document.getElementById(id).innerHTML=`<div class="error-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${msg}</div>`}
+function setBtn(id,loading){const b=document.getElementById(id);b.disabled=loading}
+
+/* ══════════════════════════════════════════════════════════════════
+   TOOL A — HEADERS (real)
+══════════════════════════════════════════════════════════════════ */
+const headerDefs=[
+  {name:'Strict-Transport-Security',desc:{ar:'يجبر المتصفح على HTTPS فقط',en:'Forces HTTPS-only connections'}},
+  {name:'Content-Security-Policy',desc:{ar:'يمنع هجمات XSS وحقن المحتوى',en:'Prevents XSS and content injection'}},
+  {name:'X-Frame-Options',desc:{ar:'يمنع تضمين الموقع في iframes',en:'Blocks clickjacking via iframes'}},
+  {name:'X-Content-Type-Options',desc:{ar:'يمنع تخمين نوع المحتوى',en:'Prevents MIME type sniffing'}},
+  {name:'Referrer-Policy',desc:{ar:'يتحكم في معلومات المصدر',en:'Controls referrer information sent'}},
+  {name:'Permissions-Policy',desc:{ar:'يقيد الوصول للكاميرا والميكروفون',en:'Restricts camera/mic access'}},
+  {name:'X-XSS-Protection',desc:{ar:'فلتر XSS للمتصفحات القديمة',en:'Legacy XSS filter'}},
+  {name:'Cache-Control',desc:{ar:'يتحكم في التخزين المؤقت',en:'Controls page caching'}},
+];
+
+async function scanHeaders(){
+  let url=document.getElementById('headers-url').value.trim();
+  if(!url){alert(lang==='ar'?'أدخل رابطاً أولاً':'Enter a URL first');return}
+  if(!url.startsWith('http'))url='https://'+url;
+  document.getElementById('headers-result').classList.add('show');
+  showScanning('headers-list');
+  document.getElementById('headers-ts').textContent='';
+  setBtn('headers-btn',true);
+  try{
+    const resp=await fetch(CORS_PROXY+encodeURIComponent(url));
+    const ph={};
+    resp.headers.forEach((v,k)=>{ph[k.toLowerCase()]=v});
+    const cnt=headerDefs.filter(h=>ph[h.name.toLowerCase()]).length;
+    const grade=cnt>=7?'A':cnt>=6?'B':cnt>=4?'C':cnt>=3?'D':'F';
+    const gc=document.getElementById('grade-circle');
+    gc.textContent=grade;gc.className='grade-circle grade-'+grade;
+    document.getElementById('grade-label').textContent=tf('grade_labels',grade);
+    document.getElementById('grade-desc').textContent=tf('grade_descs',grade);
+    document.getElementById('headers-list').innerHTML=headerDefs.map(h=>{
+      const k=h.name.toLowerCase(),ok=!!ph[k];
+      const val=ok?`<code style="font-size:10px;color:var(--text3);display:block;margin-top:3px;word-break:break-all">${ph[k].substring(0,90)}${ph[k].length>90?'...':''}</code>`:'';
+      return `<div class="header-row ${ok?'header-present':'header-missing'}">
+        <div><div class="header-name">${h.name}</div><div class="header-desc">${h.desc[lang]}</div>${val}</div>
+        <span class="header-badge ${ok?'badge-present':'badge-missing'}">${ok?t('present'):t('missing')}</span>
+      </div>`;
+    }).join('');
+    setTs('headers-ts');
+  }catch(e){showError('headers-list',t('api_err')+': '+e.message)}
+  setBtn('headers-btn',false);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   TOOL B — SHODAN (real)
+══════════════════════════════════════════════════════════════════ */
+const portColors={80:'var(--blue)',443:'var(--green)',22:'var(--orange)',21:'var(--orange)',
+  25:'var(--text2)',3306:'var(--red)',8080:'var(--blue)',6379:'var(--red)',
+  27017:'var(--red)',5432:'var(--orange)',3389:'var(--red)',8443:'var(--green)',
+  53:'var(--purple)',110:'var(--text2)',993:'var(--green)',9200:'var(--red)'};
+
+async function runShodan(){
+  const ip=document.getElementById('shodan-url').value.trim();
+  if(!ip){alert(lang==='ar'?'أدخل عنوان IP':'Enter an IP address');return}
+  document.getElementById('shodan-result').classList.add('show');
+  showScanning('shodan-grid');
+  document.getElementById('shodan-ports').innerHTML='';
+  document.getElementById('shodan-vulns').innerHTML='';
+  document.getElementById('shodan-banners-wrap').style.display='none';
+  document.getElementById('shodan-ts').textContent='';
+  setBtn('shodan-btn',true);
+  try{
+    const apiUrl=`https://api.shodan.io/shodan/host/${ip}?key=${SHODAN_KEY}`;
+    const resp=await fetch(CORS_PROXY+encodeURIComponent(apiUrl));
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error||'HTTP '+resp.status)}
+    const d=await resp.json();
+    document.getElementById('shodan-host-lbl').textContent=ip;
+    document.getElementById('shodan-grid').innerHTML=[
+      {k:t('country'),v:(d.country_name||d.country_code||'—')},
+      {k:t('org'),v:d.org||d.isp||'—'},
+      {k:t('asn'),v:d.asn||'—'},
+      {k:t('isp'),v:d.isp||'—'},
+      {k:t('hostnames'),v:(d.hostnames&&d.hostnames.length)?d.hostnames.slice(0,2).join(', '):'—'},
+      {k:t('last_update'),v:d.last_update?new Date(d.last_update).toLocaleDateString():'—'},
+      {k:'OS',v:d.os||'—'},
+      {k:t('ports'),v:d.ports?d.ports.slice(0,8).join(', ')+(d.ports.length>8?'...':''):'—'},
+    ].map(r=>`<div class="intel-card"><div class="intel-key">${r.k}</div><div class="intel-val">${r.v}</div></div>`).join('');
+    const ports=d.ports||[];
+    document.getElementById('shodan-ports').innerHTML=ports.length
+      ?ports.slice(0,20).map(p=>{const c=portColors[p]||'var(--text2)';return `<span style="background:${c}18;color:${c};border:1px solid ${c}44;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">${p}</span>`}).join('')
+      :'<span style="font-size:13px;color:var(--text3)">—</span>';
+    if(d.data&&d.data.length){
+      document.getElementById('shodan-banners-wrap').style.display='block';
+      document.getElementById('shodan-banners').innerHTML=d.data.slice(0,4).map(s=>`
+        <div style="background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border)">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:700;color:var(--blue)">Port ${s.port}</span>
+            ${s.product?`<span style="font-size:11px;color:var(--text2)">${s.product} ${s.version||''}</span>`:''}
+          </div>
+          ${s.data?`<pre style="font-size:10px;color:var(--text3);white-space:pre-wrap;max-height:60px;overflow:hidden">${s.data.substring(0,200)}</pre>`:''}
+        </div>`).join('')}
+    const vulns=d.vulns?Object.keys(d.vulns):[];
+    document.getElementById('shodan-vulns').innerHTML=vulns.length
+      ?vulns.slice(0,8).map(cve=>{
+          const info=d.vulns[cve]||{};const cvss=info.cvss||info.cvss3||'—';
+          const col=parseFloat(cvss)>=9?'var(--red)':parseFloat(cvss)>=7?'var(--orange)':'var(--purple)';
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--red-bg);border-radius:8px;margin-bottom:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--red);flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+            <a href="https://nvd.nist.gov/vuln/detail/${cve}" target="_blank" style="font-size:13px;font-weight:700;color:var(--red);text-decoration:none">${cve}</a>
+            ${cvss!=='—'?`<span style="font-size:11px;color:${col};font-weight:700;margin-${lang==='ar'?'right':'left'}:auto">CVSS ${cvss}</span>`:''}
+          </div>`}).join('')
+      :`<p style="font-size:13px;color:var(--green);padding:6px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${t('no_vulns')}</p>`;
+    setTs('shodan-ts');
+  }catch(e){showError('shodan-grid',t('api_err')+': '+e.message)}
+  setBtn('shodan-btn',false);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   TOOL C — VIRUSTOTAL (real)
+══════════════════════════════════════════════════════════════════ */
+async function runVT(){
+  const input=document.getElementById('vt-url').value.trim();
+  if(!input){alert(lang==='ar'?'أدخل رابطاً أو IP أو Hash':'Enter URL, IP or Hash');return}
+  document.getElementById('vt-result').classList.add('show');
+  showScanning('vt-summary');
+  document.getElementById('vt-engines').innerHTML='';
+  document.getElementById('vt-ts').textContent='';
+  setBtn('vt-btn',true);
+  try{
+    const isHash=/^[a-fA-F0-9]{32,64}$/.test(input);
+    const isIP=/^\d{1,3}(\.\d{1,3}){3}$/.test(input);
+    const isURL=input.startsWith('http');
+    let endpoint='';
+    if(isHash)endpoint=`https://www.virustotal.com/api/v3/files/${input}`;
+    else if(isIP)endpoint=`https://www.virustotal.com/api/v3/ip_addresses/${input}`;
+    else if(isURL){
+      const encUrl=btoa(input).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+      endpoint=`https://www.virustotal.com/api/v3/urls/${encUrl}`;
+    }else endpoint=`https://www.virustotal.com/api/v3/domains/${input}`;
+    const resp=await fetch(CORS_PROXY+encodeURIComponent(endpoint),{headers:{'x-apikey':VT_KEY}});
+    if(!resp.ok){
+      if(isURL&&resp.status===404){await submitVTUrl(input);return}
+      const e=await resp.json().catch(()=>({}));throw new Error((e.error&&e.error.message)||'HTTP '+resp.status);
+    }
+    renderVTResult(await resp.json(),input);
+  }catch(e){showError('vt-summary',t('api_err')+': '+e.message)}
+  setBtn('vt-btn',false);
+}
+
+async function submitVTUrl(url){
+  try{
+    const fd=new URLSearchParams();fd.append('url',url);
+    const sub=await fetch(CORS_PROXY+encodeURIComponent('https://www.virustotal.com/api/v3/urls'),{
+      method:'POST',headers:{'x-apikey':VT_KEY,'Content-Type':'application/x-www-form-urlencoded'},body:fd});
+    const sj=await sub.json();const id=sj.data&&sj.data.id;if(!id)throw new Error('No analysis ID');
+    await new Promise(r=>setTimeout(r,3000));
+    const ar=await fetch(CORS_PROXY+encodeURIComponent(`https://www.virustotal.com/api/v3/analyses/${id}`),{headers:{'x-apikey':VT_KEY}});
+    renderVTResult(await ar.json(),url);
+  }catch(e){showError('vt-summary',t('api_err')+': '+e.message)}
+  setBtn('vt-btn',false);
+}
+
+function renderVTResult(json,rid){
+  const attrs=json.data&&json.data.attributes;
+  if(!attrs){showError('vt-summary','No data returned');return}
+  const stats=attrs.last_analysis_stats||attrs.stats||{};
+  const mal=stats.malicious||0,sus=stats.suspicious||0,cln=(stats.harmless||0)+(stats.undetected||0);
+  const total=mal+sus+cln+(stats.timeout||0);
+  const color=mal===0?'var(--green)':mal<5?'var(--orange)':'var(--red)';
+  document.getElementById('vt-summary').innerHTML=`
+    <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;margin-bottom:1rem">
+      <div style="text-align:center;flex-shrink:0">
+        <div style="font-family:'KhaledHead',sans-serif;font-size:2.5rem;font-weight:900;color:${color}">${mal}</div>
+        <div style="font-size:11px;color:var(--text2)">${t('malicious')} / ${total}</div>
+      </div>
+      <div style="flex:1;min-width:180px">
+        <div class="prog-label"><span>${t('malicious')}</span><strong style="color:var(--red)">${mal}</strong></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${total?(mal/total*100).toFixed(1):0}%;background:var(--red)"></div></div>
+        <div class="prog-label"><span>${t('suspicious')}</span><strong style="color:var(--orange)">${sus}</strong></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${total?(sus/total*100).toFixed(1):0}%;background:var(--orange)"></div></div>
+        <div class="prog-label"><span>${t('clean')}</span><strong style="color:var(--green)">${cln}</strong></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${total?(cln/total*100).toFixed(1):0}%;background:var(--green)"></div></div>
+      </div>
+    </div>
+    ${attrs.reputation!==undefined?`<p style="font-size:12px;color:var(--text2)">Reputation: <strong style="color:${attrs.reputation>=0?'var(--green)':'var(--red)'}">${attrs.reputation}</strong></p>`:''}`;
+  const results=attrs.last_analysis_results||{};
+  const keys=Object.keys(results);
+  document.getElementById('vt-engines').innerHTML=keys.length
+    ?keys.slice(0,30).map(eng=>{
+        const r=results[eng],cat=r.category||'undetected';
+        const isMal=cat==='malicious',isSus=cat==='suspicious';
+        return `<div class="vt-row"><span class="vt-engine">${eng}</span>
+          <span class="${isMal?'vt-malicious':isSus?'vt-suspicious':'vt-clean'}">${isMal?t('malicious'):isSus?(r.result||t('suspicious')):t('clean')}</span></div>`;}).join('')
+    :`<p style="font-size:13px;color:var(--text3);padding:8px">${t('no_engines')}</p>`;
+  setTs('vt-ts');
+}
+
+/* ══ FEED ══════════════════════════════════════════════════════ */
+const feedData=[
+  {title:{ar:'هجوم DDoS على بنية تحتية حيوية',en:'DDoS Attack on Critical Infrastructure'},meta:'2024-12-18 • 14:32 UTC',sev:'critical',dot:'dot-red',src:'Cloudflare Radar'},
+  {title:{ar:'ثغرة zero-day في Apache Struts',en:'Zero-Day in Apache Struts'},meta:'2024-12-18 • 11:20 UTC',sev:'high',dot:'dot-orange',src:'NVD / NIST'},
+  {title:{ar:'حملة Phishing تستهدف البنوك الخليجية',en:'Phishing Campaign Targeting Gulf Banks'},meta:'2024-12-17 • 22:05 UTC',sev:'high',dot:'dot-orange',src:'Group-IB'},
+  {title:{ar:'تسريب بيانات: 2.4 مليون سجل مكشوف',en:'Data Breach: 2.4M Records Exposed'},meta:'2024-12-17 • 18:47 UTC',sev:'critical',dot:'dot-red',src:'HIBP'},
+  {title:{ar:'تحديث أمني عاجل لـ OpenSSL',en:'Emergency Patch — OpenSSL'},meta:'2024-12-17 • 09:15 UTC',sev:'medium',dot:'dot-blue',src:'OpenSSL Team'},
+  {title:{ar:'بوت نت جديد يستهدف أجهزة IoT',en:'New Botnet Targeting IoT Devices'},meta:'2024-12-16 • 20:30 UTC',sev:'medium',dot:'dot-blue',src:'Shodan Blog'},
+];
+function renderFeed(){
+  const el=document.getElementById('threat-feed');if(!el)return;
+  el.innerHTML=feedData.map(f=>`<div class="feed-item"><div class="feed-dot ${f.dot}"></div><div class="feed-body"><div class="feed-title">${f.title[lang]}</div><div class="feed-meta">${f.meta} — ${f.src}</div><span class="feed-badge fb-${f.sev}">${f.sev.toUpperCase()}</span></div></div>`).join('');
+}
+
+/* ══ PRINT ══════════════════════════════════════════════════════ */
+function doPrint(){
+  document.getElementById('print-ts').textContent=t('ts_prefix')+nowStr();
+  document.getElementById('print-title').textContent=t('print_report');
+  window.print();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   GOOGLE SIGN-IN (GSI)
+══════════════════════════════════════════════════════════════════ */
+function triggerGoogleSignIn(){
+  if(typeof google==='undefined'||!google.accounts){
+    alert(lang==='ar'?'جارٍ تحميل Google... حاول مرة أخرى':'Loading Google... please retry');
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  google.accounts.id.prompt((notification)=>{
+    // If One Tap not supported or dismissed, open popup
+    if(notification.isNotDisplayed()||notification.isSkippedMoment()){
+      openGooglePopup();
+    }
+  });
+}
+
+function openGooglePopup(){
+  // Render a hidden button and click it to open popup
+  const tmp=document.createElement('div');
+  tmp.style.cssText='position:absolute;top:-999px;left:-999px;visibility:hidden';
+  document.body.appendChild(tmp);
+  google.accounts.id.renderButton(tmp,{type:'standard',size:'large'});
+  const btn=tmp.querySelector('div[role=button]');
+  if(btn) btn.click();
+  setTimeout(()=>document.body.removeChild(tmp),500);
+}
+
+function parseJwt(token){
+  try{
+    const base64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+  }catch(e){return null}
+}
+
+async function handleGoogleCredential(response){
+  const payload=parseJwt(response.credential);
+  if(!payload||!payload.email){
+    document.getElementById('login-err').textContent=lang==='ar'?'فشل التحقق من Google':'Google verification failed';
+    document.getElementById('login-err').classList.add('show');
+    return;
+  }
+  const email=payload.email;
+  const name=payload.name||payload.given_name||email.split('@')[0];
+  const avatar=payload.picture||'';
+
+  try{
+    // Check if already registered
+    const rows=await sheetGetAll();
+    const existing=rows.find(r=>r.email===email);
+    if(!existing){
+      // Auto-register Google user
+      await sheetCreate({
+        username: name,
+        email: email,
+        password: 'GOOGLE_OAUTH',
+        avatar: avatar,
+        created: new Date().toISOString(),
+        provider: 'google'
+      });
+    }
+    // Set avatar in nav if available
+    if(avatar){
+      const av=document.getElementById('user-avatar');
+      av.innerHTML=`<img src="${avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" referrerpolicy="no-referrer"/>`;
+    }
+    sessionStorage.setItem('ci_user',JSON.stringify({username:name,email,avatar}));
+    enterApp(name);
+  }catch(e){
+    document.getElementById('login-err').textContent=t('api_err')+': '+e.message;
+    document.getElementById('login-err').classList.add('show');
+  }
+}
+
+// Init GSI after library loads
+window.addEventListener('load',()=>{
+  if(typeof google!=='undefined'&&google.accounts){
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+      auto_select: false,
+    });
+  }
+});
+
+/* ══ INIT ═══════════════════════════════════════════════════════ */
+setLang('ar');
+</script>
 </body>
 </html>
