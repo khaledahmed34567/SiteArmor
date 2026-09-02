@@ -431,19 +431,19 @@ function renderTaskTypeFields(type){
   if (type === "video"){
     box.innerHTML = `
       <label class="field"><span>مصدر الفيديو</span>
-        <select id="videoSource"><option value="upload">رفع ملف mp4</option><option value="youtube">رابط يوتيوب</option></select>
+        <select id="videoSource"><option value="direct">رابط فيديو مباشر (.mp4)</option><option value="youtube">رابط يوتيوب</option></select>
       </label>
       <div id="videoSourceInput" style="margin-top:10px"></div>`;
     const sourceInput = $("videoSourceInput");
     function renderSourceInput(){
-      sourceInput.innerHTML = $("videoSource").value === "upload"
-        ? `<label class="field"><span>ملف الفيديو (mp4)</span><input id="videoFile" type="file" accept="video/mp4" /></label>`
-        : `<label class="field"><span>رابط يوتيوب</span><input id="videoUrl" type="url" placeholder="https://youtube.com/watch?v=..." /></label>`;
+      sourceInput.innerHTML = $("videoSource").value === "direct"
+        ? `<label class="field"><span>رابط الفيديو (لازم ينتهي بـ .mp4 — مثال: من كاتبوكس)</span><input id="videoUrl" type="url" inputmode="url" placeholder="https://files.catbox.moe/xxxxx.mp4" required /></label>`
+        : `<label class="field"><span>رابط يوتيوب</span><input id="videoUrl" type="url" inputmode="url" placeholder="https://youtube.com/watch?v=..." required /></label>`;
     }
     $("videoSource").addEventListener("change", renderSourceInput);
     renderSourceInput();
   } else if (type === "pdf"){
-    box.innerHTML = `<label class="field"><span>ملف PDF</span><input id="pdfFile" type="file" accept="application/pdf" required /></label>`;
+    box.innerHTML = `<label class="field"><span>رابط ملف PDF (لازم ينتهي بـ .pdf — مثال: من كاتبوكس)</span><input id="pdfUrl" type="url" inputmode="url" placeholder="https://files.catbox.moe/xxxxx.pdf" required /></label>`;
   } else if (type === "quiz"){
     box.innerHTML = `<div id="quizBuilder"></div><button type="button" class="chip-btn" id="addQuestionBtn">+ إضافة سؤال</button>`;
     $("addQuestionBtn").onclick = () => { taskBuilderQuestions.push(blankQuestion()); renderQuestionBuilder(); };
@@ -470,7 +470,7 @@ function renderQuestionBuilder(){
       <label class="small-note" style="display:block;margin-top:6px">صورة السؤال (اختياري)<input type="file" accept="image/*" data-qimg="${qi}" /></label>
       <div style="margin-top:10px">
         ${q.options.map((o,oi) => `
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div class="option-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <input type="radio" name="correct${qi}" data-correct="${qi}:${oi}" ${q.correctIndex===oi?"checked":""} />
             <input type="text" placeholder="نص الاختيار ${oi+1}" data-otext="${qi}:${oi}" value="${escapeHtml(o.text)}" style="flex:1;border:1px solid var(--line);border-radius:8px;padding:8px" />
             <input type="file" accept="image/*" data-oimg="${qi}:${oi}" style="width:120px" />
@@ -536,21 +536,20 @@ async function submitTaskForm(e){
   try{
     if (type === "video"){
       const source = $("videoSource").value;
-      if (source === "upload"){
-        const file = $("videoFile").files[0];
-        if (!file){ toast("ارفع ملف الفيديو", "error"); return; }
-        base.videoSource = "upload";
-        base.videoUrl = await uploadFile(file, "videos");
+      const url = $("videoUrl").value.trim();
+      if (source === "direct"){
+        if (!/\.mp4($|\?)/i.test(url)){ toast("الرابط لازم ينتهي بـ .mp4", "error"); return; }
+        base.videoSource = "direct";
+        base.videoUrl = url;
       } else {
-        const url = $("videoUrl").value.trim();
         if (!url){ toast("أدخل رابط اليوتيوب", "error"); return; }
         base.videoSource = "youtube";
         base.videoUrl = url;
       }
     } else if (type === "pdf"){
-      const file = $("pdfFile").files[0];
-      if (!file){ toast("ارفع ملف PDF", "error"); return; }
-      base.pdfUrl = await uploadFile(file, "pdfs");
+      const url = $("pdfUrl").value.trim();
+      if (!/\.pdf($|\?)/i.test(url)){ toast("الرابط لازم ينتهي بـ .pdf", "error"); return; }
+      base.pdfUrl = url;
     } else if (type === "quiz"){
       if (!taskBuilderQuestions.length){ toast("أضف سؤالًا واحدًا على الأقل", "error"); return; }
       base.questions = await Promise.all(taskBuilderQuestions.map(async q => ({
@@ -623,7 +622,7 @@ function renderExamQuestionBuilder(){
       <label class="small-note" style="display:block;margin-top:6px">صورة السؤال (اختياري)<input type="file" accept="image/*" data-eqimg="${qi}" /></label>
       <div style="margin-top:10px">
         ${q.options.map((o,oi) => `
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div class="option-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <input type="radio" name="ecorrect${qi}" data-ecorrect="${qi}:${oi}" ${q.correctIndex===oi?"checked":""} />
             <input type="text" placeholder="نص الاختيار ${oi+1}" data-eotext="${qi}:${oi}" value="${escapeHtml(o.text)}" style="flex:1;border:1px solid var(--line);border-radius:8px;padding:8px" />
           </div>`).join("")}
