@@ -1,19 +1,20 @@
 /* =====================================================================
    Omar Tareeq — admin.js
-   Standalone admin site. Normal Firebase email/password accounts,
-   but signup requires ADMIN_INVITE_CODE below so random visitors
-   can't self-register as team members. Change this code to something
-   private, and don't publish this file's URL anywhere public.
-   For real protection, also set a Firestore security rule that only
-   allows role == "admin" documents to read/write the collections
-   below — this file alone is a client-side gate, not a substitute
-   for that.
+   Standalone admin site, gated by a single shared PIN (ADMIN_PIN below)
+   instead of individual team accounts — change it to something private
+   and don't publish this file's URL anywhere public.
+
+   Under the hood, a real (hidden) Firebase account is still used so
+   Firestore security rules can verify role == "admin" server-side —
+   the PIN just controls whether the browser signs into that shared
+   account. This file is a client-side gate, not a substitute for
+   proper Firestore rules restricting writes to role == "admin".
    ===================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
-  signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile
+  signInWithEmailAndPassword, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc,
@@ -37,7 +38,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-const ADMIN_INVITE_CODE = "OMARTAREEQ-TEAM-2026"; // change this
+const ADMIN_PIN = "9033"; // change this to something only the team knows
+const ADMIN_EMAIL = "team@omar-tareeq-admin.internal"; // hidden shared account, not a real inbox
+const ADMIN_PASSWORD = "Ot-Team-9033-Shared-Key!"; // change this too — keep it private, same as the PIN
 const GRADES = ["الأول الإعدادي","الثاني الإعدادي","الثالث الإعدادي","الأول الثانوي","الثاني الثانوي","الثالث الثانوي"];
 
 /* ---------- helpers ---------- */
@@ -99,76 +102,25 @@ document.addEventListener("contextmenu", (e) => {
   if (tag !== "INPUT" && tag !== "TEXTAREA") e.preventDefault();
 });
 
-/* ---------- auth view switching ---------- */
-const cards = { login: $("loginCard"), signup: $("signupCard"), forgot: $("forgotCard") };
-function showCard(name){ Object.values(cards).forEach(hide); show(cards[name]); }
-$("goSignup").onclick = () => showCard("signup");
-$("goLogin").onclick = () => showCard("login");
-$("backToLogin").onclick = () => showCard("login");
-$("forgotPassBtn").onclick = () => showCard("forgot");
-
-/* ---------- signup (invite-gated) ---------- */
-$("signupForm").addEventListener("submit", async (e) => {
+/* ---------- PIN gate (signs into a hidden shared account behind the scenes) ---------- */
+$("pinForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const fullName = $("suFullName").value.trim();
-  const email = $("suEmail").value.trim();
-  const password = $("suPassword").value;
-  const invite = $("suInvite").value.trim();
-  if (!fullName || !email || password.length < 6 || !invite){
-    toast("من فضلك أكمل كل الحقول (كلمة المرور 6 أحرف على الأقل)", "error"); return;
-  }
-  if (invite !== ADMIN_INVITE_CODE){
-    toast("رمز الدعوة غير صحيح", "error"); return;
-  }
+  const pin = $("pinInput").value.trim();
+  if (pin !== ADMIN_PIN){ toast("الرمز غير صحيح", "error"); return; }
+  $("pinInput").value = "";
   try{
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: fullName });
-    await setDoc(doc(db,"users",cred.user.uid), {
-      fullName, email, role: "admin", walletBalance: 0, createdAt: serverTimestamp()
-    });
-    toast("تم إنشاء الحساب بنجاح", "success");
-  }catch(err){ toast(friendlyAuthError(err), "error"); }
-});
-
-/* ---------- login (restricted to role == admin) ---------- */
-$("loginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = $("loginEmail").value.trim();
-  const password = $("loginPassword").value;
-  if (!email || !password){ toast("من فضلك أكمل البيانات", "error"); return; }
-  try{
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const userDoc = await getDoc(doc(db,"users",cred.user.uid));
-    if (!userDoc.exists() || userDoc.data().role !== "admin"){
-      await signOut(auth);
-      toast("هذا الحساب مش عضو في فريق الإدارة", "error");
-      return;
+    try{
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+    }catch(err){
+      if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential"){
+        const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+        await setDoc(doc(db,"users",cred.user.uid), {
+          fullName: "فريق Omar Tareeq", email: ADMIN_EMAIL, role: "admin", walletBalance: 0, createdAt: serverTimestamp()
+        });
+      } else throw err;
     }
-  }catch(err){ toast(friendlyAuthError(err), "error"); }
+  }catch(err){ toast("حصل خطأ أثناء الدخول، حاول تاني", "error"); }
 });
-
-$("forgotForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = $("forgotEmail").value.trim();
-  try{
-    await sendPasswordResetEmail(auth, email);
-    toast("تم إرسال رابط تفعيل استعادة كلمة المرور على بريدك", "success");
-    showCard("login");
-  }catch(err){ toast(friendlyAuthError(err), "error"); }
-});
-
-function friendlyAuthError(err){
-  const map = {
-    "auth/email-already-in-use": "البريد الإلكتروني مستخدم بالفعل",
-    "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة",
-    "auth/weak-password": "كلمة المرور ضعيفة جدًا",
-    "auth/wrong-password": "كلمة المرور غير صحيحة",
-    "auth/user-not-found": "لا يوجد حساب بهذه البيانات",
-    "auth/invalid-credential": "بيانات الدخول غير صحيحة",
-    "auth/too-many-requests": "محاولات كثيرة، حاول بعد شوية",
-  };
-  return map[err?.code] || "حصل خطأ، حاول تاني";
-}
 
 /* ---------- session bootstrap ---------- */
 let currentUserData = null;
@@ -188,7 +140,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUserData = null;
     show($("auth-view")); hide($("adminShell"));
     $("headerActions").classList.remove("show");
-    showCard("login");
+    $("pinInput").value = "";
   }
 });
 $("logoutBtn").onclick = () => signOut(auth);
