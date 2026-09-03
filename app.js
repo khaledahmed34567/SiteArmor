@@ -103,39 +103,51 @@ document.addEventListener("contextmenu", (e) => {
 });
 
 /* ---------- PIN gate (signs into a hidden shared account behind the scenes) ---------- */
+let provisioning = false;
+let currentUserData = null;
+
+async function enterAdminShell(uid){
+  const userDoc = await getDoc(doc(db,"users",uid));
+  if (!userDoc.exists() || userDoc.data().role !== "admin"){
+    toast("حصل خطأ في الصلاحيات، حاول تاني", "error");
+    await signOut(auth);
+    return;
+  }
+  currentUserData = userDoc.data();
+  hide($("auth-view")); show($("adminShell"));
+  $("headerActions").classList.add("show");
+  $("headerUserBox").textContent = currentUserData.fullName || "";
+  initTabs();
+}
+
 $("pinForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const pin = $("pinInput").value.trim();
   if (pin !== ADMIN_PIN){ toast("الرمز غير صحيح", "error"); return; }
   $("pinInput").value = "";
   try{
+    let cred;
     try{
-      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+      cred = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
     }catch(err){
       if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential"){
-        const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+        provisioning = true;
+        cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
         await setDoc(doc(db,"users",cred.user.uid), {
           fullName: "فريق Omar Tareeq", email: ADMIN_EMAIL, role: "admin", walletBalance: 0, createdAt: serverTimestamp()
         });
+        provisioning = false;
       } else throw err;
     }
+    await enterAdminShell(cred.user.uid);
   }catch(err){ toast("حصل خطأ أثناء الدخول، حاول تاني", "error"); }
 });
 
 /* ---------- session bootstrap ---------- */
-let currentUserData = null;
 onAuthStateChanged(auth, async (user) => {
   if (user){
-    const userDoc = await getDoc(doc(db,"users",user.uid));
-    if (!userDoc.exists() || userDoc.data().role !== "admin"){
-      await signOut(auth);
-      return;
-    }
-    currentUserData = userDoc.data();
-    hide($("auth-view")); show($("adminShell"));
-    $("headerActions").classList.add("show");
-    $("headerUserBox").textContent = currentUserData.fullName || "";
-    initTabs();
+    if (provisioning) return; // the pinForm handler above will call enterAdminShell itself once the profile write finishes
+    await enterAdminShell(user.uid);
   } else {
     currentUserData = null;
     show($("auth-view")); hide($("adminShell"));
