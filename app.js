@@ -88,6 +88,12 @@ async function notifyUser(uid, title, body, link=""){
     await addDoc(collection(db,"notifications",uid,"items"), { title, body, link, read:false, createdAt: serverTimestamp() });
   }catch(err){ /* silent */ }
 }
+function writeErrorMessage(err){
+  if (err?.code === "permission-denied"){
+    return "الحفظ اترفض من قواعد أمان Firestore — لازم تسمح لـ role == admin بالكتابة على الكولكشن ده في Firestore Rules";
+  }
+  return "حصل خطأ أثناء الحفظ: " + (err?.message || "غير معروف");
+}
 document.addEventListener("contextmenu", (e) => {
   const tag = e.target.tagName;
   if (tag !== "INPUT" && tag !== "TEXTAREA") e.preventDefault();
@@ -188,10 +194,10 @@ onAuthStateChanged(auth, async (user) => {
 $("logoutBtn").onclick = () => signOut(auth);
 
 /* ---------- tabs ---------- */
-let adminTab = "students";
-const TABS = ["students","tracks","courses","lectures","tasks","exams","wallet","live"];
+let adminTab = "overview";
+const TABS = ["overview","students","tracks","courses","lectures","tasks","exams","wallet","live"];
 function tabLabel(t){
-  return { students:"الطلاب", tracks:"المسارات", courses:"الكورسات", lectures:"المحاضرات", tasks:"المهام", exams:"اختبارات شاملة", wallet:"طلبات المحفظة", live:"البث المباشر" }[t];
+  return { overview:"نظرة عامة", students:"الطلاب", tracks:"المسارات", courses:"الكورسات", lectures:"المحاضرات", tasks:"المهام", exams:"اختبارات شاملة", wallet:"طلبات المحفظة", live:"البث المباشر" }[t];
 }
 function initTabs(){
   $("adminTabs").innerHTML = TABS.map(t => `<button class="tab-btn ${t===adminTab?"active":""}" data-tab="${t}">${tabLabel(t)}</button>`).join("");
@@ -204,8 +210,62 @@ function initTabs(){
 }
 function renderPane(){
   const pane = $("adminPane");
-  const map = { students:adminStudents, tracks:adminTracks, courses:adminCourses, lectures:adminLectures, tasks:adminTasks, exams:adminExams, wallet:adminWallet, live:adminLive };
+  const map = { overview:adminOverview, students:adminStudents, tracks:adminTracks, courses:adminCourses, lectures:adminLectures, tasks:adminTasks, exams:adminExams, wallet:adminWallet, live:adminLive };
   map[adminTab](pane);
+}
+
+/* ---- overview dashboard ---- */
+function statCard(label, value){
+  return `<div class="panel" style="text-align:center">
+    <p class="small-note" style="margin:0 0 6px">${escapeHtml(label)}</p>
+    <p style="font-family:var(--font-display);font-weight:700;font-size:24px;margin:0">${value}</p>
+  </div>`;
+}
+async function adminOverview(pane){
+  pane.innerHTML = `<div class="empty-state">جارِ التحميل</div>`;
+  try{
+    const [usersSnap, tracksSnap, coursesSnap, lecturesSnap, examsSnap, pendingSnap, liveSnap] = await Promise.all([
+      getDocs(collection(db,"users")),
+      getDocs(collection(db,"tracks")),
+      getDocs(collection(db,"courses")),
+      getDocs(collection(db,"lectures")),
+      getDocs(collection(db,"comprehensiveExams")),
+      getDocs(query(collection(db,"walletRequests"), where("status","==","pending"))),
+      getDoc(doc(db,"liveStream","current"))
+    ]);
+    const students = usersSnap.docs.filter(d => d.data().role !== "admin");
+    const admins = usersSnap.docs.filter(d => d.data().role === "admin");
+    const totalWallet = students.reduce((sum,d) => sum + (d.data().walletBalance||0), 0);
+    const paidCourses = coursesSnap.docs.filter(d => (d.data().price||0) > 0).length;
+    const liveNow = liveSnap.exists() && liveSnap.data().isLive;
+
+    pane.innerHTML = `
+      <div class="card-grid" style="margin-bottom:16px">
+        ${statCard("الطلاب", students.length)}
+        ${statCard("أعضاء الفريق", admins.length)}
+        ${statCard("المسارات", tracksSnap.size)}
+        ${statCard("الكورسات", `${coursesSnap.size} (${paidCourses} مدفوع)`)}
+        ${statCard("المحاضرات", lecturesSnap.size)}
+        ${statCard("اختبارات شاملة", examsSnap.size)}
+        ${statCard("طلبات شحن معلّقة", pendingSnap.size)}
+        ${statCard("رصيد الطلاب الإجمالي", totalWallet + " ج.م")}
+      </div>
+      <div class="panel" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><p style="font-family:var(--font-display);font-weight:700;margin:0 0 4px">حالة البث المباشر</p>
+        <span class="badge ${liveNow?"approved":"pending"}">${liveNow?"شغّال دلوقتي":"مقفول"}</span></div>
+        <button class="chip-btn" data-goto="live">فتح تبويب البث المباشر</button>
+      </div>
+      ${pendingSnap.size ? `<div class="panel" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <p style="font-family:var(--font-display);font-weight:700;margin:0">فيه ${pendingSnap.size} طلب شحن محتاج مراجعة</p>
+        <button class="chip-btn" data-goto="wallet">مراجعة الطلبات</button>
+      </div>` : ""}`;
+    pane.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => {
+      adminTab = b.dataset.goto;
+      initTabs();
+    }));
+  }catch(err){
+    pane.innerHTML = `<div class="empty-state">${writeErrorMessage(err)}</div>`;
+  }
 }
 
 /* ---------- students tab ---------- */
@@ -246,9 +306,11 @@ function renderStudentsList(list, all){
     const amountStr = prompt("قيمة التعديل بالجنيه (سالب للخصم، موجب للإضافة):", "0");
     const amount = Number(amountStr);
     if (!amountStr || Number.isNaN(amount) || amount === 0) return;
-    await updateDoc(doc(db,"users",b.dataset.adjust), { walletBalance: increment(amount) });
-    toast("تم تعديل الرصيد", "success");
-    adminStudents($("adminPane"));
+    try{
+      await updateDoc(doc(db,"users",b.dataset.adjust), { walletBalance: increment(amount) });
+      toast("تم تعديل الرصيد", "success");
+      adminStudents($("adminPane"));
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   }));
   box.querySelectorAll("[data-role]").forEach(b => b.addEventListener("click", async () => {
     const promote = b.dataset.current !== "admin";
@@ -257,9 +319,11 @@ function renderStudentsList(list, all){
       promote ? "هيقدر يدخل لوحة الإدارة ويعدّل كل حاجة. متأكد؟" : "هيفقد صلاحيات الإدارة فورًا. متأكد؟"
     );
     if (!ok) return;
-    await updateDoc(doc(db,"users",b.dataset.role), { role: promote ? "admin" : "student" });
-    toast("تم الحفظ", "success");
-    adminStudents($("adminPane"));
+    try{
+      await updateDoc(doc(db,"users",b.dataset.role), { role: promote ? "admin" : "student" });
+      toast("تم الحفظ", "success");
+      adminStudents($("adminPane"));
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   }));
 }
 
@@ -280,15 +344,17 @@ async function adminTracks(pane){
 
   $("trackForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const file = $("tImage").files[0];
-    const imageUrl = file ? await uploadFile(file, "trackImages") : "";
-    await addDoc(collection(db,"tracks"), {
-      title: $("tTitle").value.trim(), grade: $("tGrade").value, order: +$("tOrder").value,
-      description: $("tDesc").value.trim(), imageUrl, coursesCount: 0, createdAt: serverTimestamp()
-    });
-    toast("تمت إضافة المسار", "success");
-    e.target.reset();
-    loadTracksAdminList();
+    try{
+      const file = $("tImage").files[0];
+      const imageUrl = file ? await uploadFile(file, "trackImages") : "";
+      await addDoc(collection(db,"tracks"), {
+        title: $("tTitle").value.trim(), grade: $("tGrade").value, order: +$("tOrder").value,
+        description: $("tDesc").value.trim(), imageUrl, coursesCount: 0, createdAt: serverTimestamp()
+      });
+      toast("تمت إضافة المسار", "success");
+      e.target.reset();
+      loadTracksAdminList();
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   });
   loadTracksAdminList();
 }
@@ -329,17 +395,19 @@ async function adminCourses(pane){
 
   $("courseForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const file = $("cImage").files[0];
-    const imageUrl = file ? await uploadFile(file, "courseImages") : "";
-    const trackId = $("cTrack").value;
-    await addDoc(collection(db,"courses"), {
-      trackId, title: $("cTitle").value.trim(), month: $("cMonth").value.trim(),
-      grade: $("cGrade").value, price: +$("cPrice").value, imageUrl, createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db,"tracks",trackId), { coursesCount: increment(1) });
-    toast("تمت إضافة الكورس", "success");
-    e.target.reset();
-    loadCoursesAdminList();
+    try{
+      const file = $("cImage").files[0];
+      const imageUrl = file ? await uploadFile(file, "courseImages") : "";
+      const trackId = $("cTrack").value;
+      await addDoc(collection(db,"courses"), {
+        trackId, title: $("cTitle").value.trim(), month: $("cMonth").value.trim(),
+        grade: $("cGrade").value, price: +$("cPrice").value, imageUrl, createdAt: serverTimestamp()
+      });
+      await updateDoc(doc(db,"tracks",trackId), { coursesCount: increment(1) });
+      toast("تمت إضافة الكورس", "success");
+      e.target.reset();
+      loadCoursesAdminList();
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   });
   loadCoursesAdminList();
 }
@@ -374,12 +442,14 @@ async function adminLectures(pane){
 
   $("lectureForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    await addDoc(collection(db,"lectures"), {
-      courseId: $("lCourse").value, title: $("lTitle").value.trim(), order: +$("lOrder").value, createdAt: serverTimestamp()
-    });
-    toast("تمت إضافة المحاضرة", "success");
-    e.target.reset();
-    loadLecturesAdminList();
+    try{
+      await addDoc(collection(db,"lectures"), {
+        courseId: $("lCourse").value, title: $("lTitle").value.trim(), order: +$("lOrder").value, createdAt: serverTimestamp()
+      });
+      toast("تمت إضافة المحاضرة", "success");
+      e.target.reset();
+      loadLecturesAdminList();
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   });
   loadLecturesAdminList();
 }
@@ -705,17 +775,21 @@ async function adminWallet(pane){
   list.querySelectorAll("[data-approve]").forEach(b => b.addEventListener("click", async () => {
     const amount = +document.querySelector(`[data-amount="${b.dataset.approve}"]`).value;
     if (!amount || amount <= 0){ toast("أدخل المبلغ أولًا", "error"); return; }
-    await updateDoc(doc(db,"users",b.dataset.uid), { walletBalance: increment(amount) });
-    await updateDoc(doc(db,"walletRequests",b.dataset.approve), { status:"approved", amount, reviewedAt: serverTimestamp() });
-    await notifyUser(b.dataset.uid, "تم شحن المحفظة", `تم إضافة ${amount} ج.م لرصيدك`, "");
-    toast("تم القبول", "success");
-    adminWallet(pane);
+    try{
+      await updateDoc(doc(db,"users",b.dataset.uid), { walletBalance: increment(amount) });
+      await updateDoc(doc(db,"walletRequests",b.dataset.approve), { status:"approved", amount, reviewedAt: serverTimestamp() });
+      await notifyUser(b.dataset.uid, "تم شحن المحفظة", `تم إضافة ${amount} ج.م لرصيدك`, "");
+      toast("تم القبول", "success");
+      adminWallet(pane);
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   }));
   list.querySelectorAll("[data-reject]").forEach(b => b.addEventListener("click", async () => {
-    await updateDoc(doc(db,"walletRequests",b.dataset.reject), { status:"rejected", reviewedAt: serverTimestamp() });
-    await notifyUser(b.dataset.uid, "تم رفض طلب الشحن", "من فضلك تأكد من صورة التحويل وأعد المحاولة", "");
-    toast("تم الرفض", "success");
-    adminWallet(pane);
+    try{
+      await updateDoc(doc(db,"walletRequests",b.dataset.reject), { status:"rejected", reviewedAt: serverTimestamp() });
+      await notifyUser(b.dataset.uid, "تم رفض طلب الشحن", "من فضلك تأكد من صورة التحويل وأعد المحاولة", "");
+      toast("تم الرفض", "success");
+      adminWallet(pane);
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   }));
 }
 
@@ -732,9 +806,11 @@ async function adminLive(pane){
       <button class="primary-btn" id="saveLiveBtn" style="width:auto;padding:11px 26px;margin-top:16px">حفظ</button>
     </div>`;
   $("saveLiveBtn").onclick = async () => {
-    await setDoc(doc(db,"liveStream","current"), {
-      youtubeUrl: $("liveUrl").value.trim(), isLive: $("liveToggle").checked, updatedAt: serverTimestamp()
-    });
-    toast("تم الحفظ", "success");
+    try{
+      await setDoc(doc(db,"liveStream","current"), {
+        youtubeUrl: $("liveUrl").value.trim(), isLive: $("liveToggle").checked, updatedAt: serverTimestamp()
+      });
+      toast("تم الحفظ", "success");
+    }catch(err){ toast(writeErrorMessage(err), "error"); }
   };
 }
